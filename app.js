@@ -29,9 +29,18 @@ connect.then((db) => {
 
 var app = express();
 
+app.all('*', (req, res, next) => {
+  if(req.secure){ // incoming req is secure
+    return next();
+  }
+  else{ // req is unsecure so change secure req
+    res.redirect(307, 'https://' + req.hostname + ':' + app.get('secPort') + req.url);
+  }
+})
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
+app.set('view engine', 'jade'); 
 
 app.use(logger('dev'));
 app.use(express.json());
