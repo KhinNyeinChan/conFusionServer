@@ -11,6 +11,7 @@ var User = new Schema({
         type: String,
         default: ''
     },
+    facebookId : String,    //facebookId passed in access token
     admin: {
         type: Boolean,
         default: false
