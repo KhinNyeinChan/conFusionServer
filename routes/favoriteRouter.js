@@ -28,7 +28,7 @@ favoriteRouter.route('/')
     };
     Favorites.findOne({user: req.user._id})
     .then((favorite) => {
-        if(!favorite || favorite .length === 0){ //no favorite
+        if(!favorite || favorite.length === 0){ //no user
             Favorites.create(favoriteDishesData)
             .then((favorite) => {
                 console.log('Favorite dish created',favorite);
@@ -37,8 +37,15 @@ favoriteRouter.route('/')
                 res.json(favorite);
             }, (err) => next(err));
         }
-        else{ //favorites exist
-            favorite.dishes.push(req.body);
+        else{ //user exist
+            for (var i=0; i<req.body.length; i++) {
+                if (favorite.dishes.indexOf(req.body[i]._id) === -1) {
+                    favorite.dishes.push(req.body[i]._id);
+                }
+                else{
+                    res.json("One of the favorites is already in the favorite list!");
+                }
+            }
             favorite.save()
             .then((favorite) => {
                 res.statusCode = 200;
@@ -67,8 +74,25 @@ favoriteRouter.route('/')
 favoriteRouter.route('/:dishId')
 .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
 .get(cors.cors, authenticate.verifyUser, (req,res,next) => {
-    res.statusCode = 403;
-    res.end('GET operation not supported on /favorites' + req.params.dishId);
+    Favorites.findOne({user: req.user._id})
+    .then((favorites) => {
+        if(!favorites){ //no favorite for user
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            return res.json({"exists": false, "favorites": favorites});
+        }
+        else{
+            if(favorites.dishes.indexOf(req.params.dishId) < 0){    //favorites exist but favorite dishId not exist
+                res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/json');
+                return res.json({"exists": true, "favorites": favorites});
+            }
+            else{
+
+            }
+        }
+    }, (err) => next(err))
+    .catch((err) => next(err));
 })
 .post(cors.corsWithOptions, authenticate.verifyUser, (req,res,next) => {
     var favoriteDishesData = {
@@ -77,7 +101,7 @@ favoriteRouter.route('/:dishId')
     };
     Favorites.findOne({user: req.user._id})
     .then((favorite) => {
-        if(!favorite || favorite .length === 0){ //no favorite
+        if(!favorite || favorite .length === 0){ //no user
             Favorites.create(favoriteDishesData)
             .then((favorite) => {
                 console.log('Favorite dish created',favorite);
